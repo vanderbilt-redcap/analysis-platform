@@ -1,0 +1,46 @@
+{
+  "name": "RPPS Reporting",
+
+  "namespace": "Vanderbilt\\RppsReportingExternalModule",
+  "framework-version": 5,
+  "authors": [
+    {
+      "name": "Eva Bascompte Moragas",
+      "email": "datacore@vumc.org",
+      "institution": "Vanderbilt University Medical Center"
+    }
+  ],
+
+  "permissions": [],
+
+  "links": {
+    "project": [
+      {
+        "name": "RPPS Reporting",
+        "icon": "database_table",
+        "url": "index.php",
+        "target": "_blank"
+      }
+    ]
+  },
+
+  "no-auth-pages":["index"],
+
+  "description": "RPPS Reporting",
+
+  "project-settings": [
+    {
+      "key": "max",
+      "name": "Enter the maximum number that will be displayed. Below that number the it will show NULL",
+      "required": true,
+      "type": "text"
+    }
+  ],
+
+  "compatibility": {
+    "php-version-min": "5.5.0",
+    "php-version-max": "",
+    "redcap-version-min": "10.2.0",
+    "redcap-version-max": ""
+  }
+}
