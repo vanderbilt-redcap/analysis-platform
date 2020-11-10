@@ -45,7 +45,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
     </div>
     <?php
     $visible = "";
-    if(!empty($_SESSION[$_GET['pid']."_dash_filter_val"]) && array_key_exists('dash',$_SESSION)){
+    if(!empty($_SESSION[$_GET['pid']."_dash_filter_val"]) && array_key_exists('dash',$_GET)){
         $visible = "visible";
     }
     ?>
@@ -55,13 +55,22 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             <?php
             foreach ($filterby as $index=>$filter){
                 $filter_options = $module->getChoiceLabels($filter, $project_id);
-                $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_filter_val"] == $index && array_key_exists('dash',$_GET)){
-                    $selected = "selected";
-                }
                 echo '<label class="select-header">'.$module->getFieldLabel($filter).'</label>';
                 foreach ($filter_options as $key => $option){
-                    echo "<li><input type='checkbox' onclick='selectOnlyOneGroup(this)' name='".$filter."' value='".$key."' ".$selected."> ".$option."</li>";
+                    $checked = "";
+                    if(!empty($_SESSION[$_GET['pid'] . "_dash_filter_val"]) && array_key_exists('dash',$_GET)) {
+                        $filters = explode(',', $_SESSION[$_GET['pid'] . "_dash_filter_val"]);
+                        if($filter == $_SESSION[$_GET['pid'] . "_dash_filter_var"]){
+                            $checked = "";
+                            foreach ($filters as $fvalue){
+                                if($fvalue == $key){
+                                    $checked = "checked";
+                                }
+                            }
+                        }
+                    }
+
+                    echo "<li><input type='checkbox' onclick='selectOnlyOneGroup(this)' name='".$filter."' value='".$key."' ".$checked."> ".$option."</li>";
                 }
 
             }
