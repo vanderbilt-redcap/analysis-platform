@@ -4,9 +4,6 @@ function allfieldsSelecter(){
     if($('#outcome').val() == "" || $('#outcome').val() == undefined){
         errMsg.push("Please select a value for the <strong>Outcome</strong>.");
     }
-    // if($('#filter li input:checked').val() == "" || $('#filter li input:checked').val() == undefined){
-    //     errMsg.push("Please select a value for the <strong>Filter</strong>.");
-    // }
     if($('#condition1').val() == "" || $('#condition1').val() == undefined){
         errMsg.push("Please select a value for the <strong>First Condition</strong>.");
     }
@@ -29,16 +26,17 @@ function loadTable(url){
         var filterArray = $('#filter li input:checked').map(function () {
             return this.value;
         }).get().join(",");
-        var filter = "&filtervar=" + $('#filter li input:checked').attr('name') + "&filterval=" + filterArray;
-        // var condition1Array = $('#condition1 li input:checked').map(function () {
-        //     return this.value;
-        // }).get().join(",");
-        // var condition1 = "&condition1var="+$('#condition1 li input:checked').attr('name')+"&condition1val="+condition1Array;
+        if($('#filter li input:checked').attr('name') == undefined){
+            var filter = "";
+        }else{
+            var filter = "&filtervar=" + $('#filter li input:checked').attr('name') + "&filterval=" + filterArray;
+        }
+
         var condition1 = "&condition1var=" + $('#condition1 option:selected').attr('name') + "&condition1val=" + $('#condition1').val();
         var condition2 = "&condition2var=" + $('#condition2 option:selected').attr('name') + "&condition2val=" + $('#condition2').val();
-
-        var data = outcome + filter + condition1 + condition2;
-        console.log(data)
+        var multiple1 = "&multiple1=" + $('#condition1 option:selected').attr('multiple1');
+        var multiple2 = "&multiple2=" + $('#condition2 option:selected').attr('multiple2');
+        var data = outcome + filter + condition1 + condition2 + multiple1 + multiple2;
 
         $('#loadTablebtn').prop('disabled', true);
         $.ajax({
@@ -70,4 +68,15 @@ function getParamUrl(url, newParam){
         url = url + "&dash="+newParam;
     }
     return url;
+}
+
+function selectOnlyOneGroup(element){
+    var selectedName = $(element).attr('name');
+    if($('#filter input[type=checkbox]:checked').length > 1) {
+        $('#filter input[type=checkbox]:checked').each(function () {
+            if(selectedName != $(this).attr('name')){
+                $(element).prop('checked',false);
+            }
+        });
+    }
 }

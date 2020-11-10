@@ -131,3 +131,7 @@ option {
 #table_archive th{
     background-color: #f5f5f5;
 }
+#filter .select-header{
+    background-color: #e0dfdf;
+    width: 100%;
+}

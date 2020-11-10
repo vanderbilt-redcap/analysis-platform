@@ -34,6 +34,56 @@
       "name": "Enter the maximum number that will be displayed. Below that number the it will show NULL",
       "required": true,
       "type": "text"
+    },
+    {
+      "key": "outcome",
+      "name": "Outcome",
+      "required": true,
+      "type": "sub_settings",
+      "repeatable": true,
+      "sub_settings": [
+        {
+          "key": "outcome-field",
+          "name": "Select the field to add in the outcome selector",
+          "required": true,
+          "type": "field-list"
+        }
+      ]
+    },
+    {
+      "key": "filterby",
+      "name": "Filter By",
+      "required": true,
+      "type": "sub_settings",
+      "repeatable": true,
+      "sub_settings": [
+        {
+          "key": "filterby-field",
+          "name": "Select the field to add in the filter by selector",
+          "required": true,
+          "type": "field-list"
+        }
+      ]
+    },
+    {
+      "key": "condition",
+      "name": "Condition",
+      "required": true,
+      "type": "sub_settings",
+      "repeatable": true,
+      "sub_settings": [
+        {
+          "key": "condition-field",
+          "name": "Select the field to add in the condition 1 selector",
+          "required": true,
+          "type": "field-list"
+        },
+        {
+          "key": "condition-multiple",
+          "name": "Will this variable create a MULTIPLE row?",
+          "type": "checkbox"
+        }
+      ]
     }
   ],
 

@@ -15,6 +15,8 @@ $_SESSION[$_GET['pid']."_dash_condition1_var"] = $_POST['condition1var'];
 $_SESSION[$_GET['pid']."_dash_condition1_val"] = $_POST['condition1val'];
 $_SESSION[$_GET['pid']."_dash_condition2_var"] = $_POST['condition2var'];
 $_SESSION[$_GET['pid']."_dash_condition2_val"] = $_POST['condition2val'];
+$_SESSION[$_GET['pid']."_dash_multiple1"] = $_POST['multiple1'];
+$_SESSION[$_GET['pid']."_dash_multiple2"] = $_POST['multiple2'];
 
 $codeCrypt = ProjectData::getCrypt("start_".$timestamp,'e',$secret_key,$secret_iv);
 

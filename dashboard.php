@@ -3,22 +3,14 @@ namespace Vanderbilt\RppsReportingExternalModule;
 require_once (dirname(__FILE__)."/classes/ProjectData.php");
 $project_id = $_GET['pid'];
 $max = $module->getProjectSetting('max');
-
-#Outcome
-$rpps_s_q_57 = $module->getChoiceLabels('rpps_s_q57', $project_id);
-
-#Filter By
-$rpps_s_q60 = $module->getChoiceLabels('rpps_s_q60', $project_id);
-
-#Comparisson Vars
-$rpps_s_q61 = $module->getChoiceLabels('rpps_s_q61', $project_id);
-$rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
+$outcome = $module->getProjectSetting('outcome-field');
+$filterby = $module->getProjectSetting('filterby-field');
+$condition = $module->getProjectSetting('condition-field');
+$condition_multiple = $module->getProjectSetting('condition-multiple');
 
 ?>
 <script>
     $(document).ready(function() {
-        // $('#table_archive').dataTable( {"paging": false, "searching": false, "bInfo": false, "order": [0, "desc"]});
-
         var filterBy = document.getElementById('filterBy');
         filterBy.getElementsByClassName('anchor')[0].onclick = function (evt) {
             if (filterBy.classList.contains('visible'))
@@ -33,19 +25,27 @@ $rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
     <div class="alert alert-danger fade in col-md-12" id="errMsgContainerModal" style="display:none"></div>
     <div style="padding-bottom: 10px">
         <select class="form-control" id="outcome">
-            <option>Outcome</option>
             <?php
             $selected = "";
-            if($_SESSION[$_GET['pid']."_dash_outcome_val"] == "0"){
+            if(empty($_SESSION[$_GET['pid']."_dash_outcome_val"])){
+                echo "HELLO";
                 $selected = "selected";
+            }?>
+            <option <?=$selected?>>Outcome</option>
+            <?php
+            foreach ($outcome as $index=>$out){
+                $selected = "";
+                if($_SESSION[$_GET['pid']."_dash_outcome_val"] == $index && array_key_exists('dash',$_GET)){
+                    $selected = "selected";
+                }
+                echo '<option name="'.$out.'" value="'.$index.'" '.$selected.'>'.$module->getFieldLabel($out).'</option>';
             }
             ?>
-            <option name="rpps_s_q57" value="0" <?=$selected;?>>Please use the scale below to rate your overall experience in the research study, where 0 is the worst possible experience, and 10 is the best possible experience.</option>
         </select>
     </div>
     <?php
     $visible = "";
-    if(!empty($_SESSION[$_GET['pid']."_dash_filter_val"])){
+    if(!empty($_SESSION[$_GET['pid']."_dash_filter_val"]) && array_key_exists('dash',$_SESSION)){
         $visible = "visible";
     }
     ?>
@@ -53,38 +53,47 @@ $rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
         <span class="anchor form-control">Filter By...</span>
         <ul class="items" id="filter">
             <?php
-            foreach ($rpps_s_q60 as $index => $option){
+            foreach ($filterby as $index=>$filter){
+                $filter_options = $module->getChoiceLabels($filter, $project_id);
                 $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_filter_val"] == $index){
-                    $selected = "checked";
+                if($_SESSION[$_GET['pid']."_dash_filter_val"] == $index && array_key_exists('dash',$_GET)){
+                    $selected = "selected";
                 }
-                echo "<li><input type='checkbox' name='rpps_s_q60' value='".$index."' ".$selected."> ".$option."</li>";
+                echo '<label class="select-header">'.$module->getFieldLabel($filter).'</label>';
+                foreach ($filter_options as $key => $option){
+                    echo "<li><input type='checkbox' onclick='selectOnlyOneGroup(this)' name='".$filter."' value='".$key."' ".$selected."> ".$option."</li>";
+                }
+
             }
             ?>
         </ul>
     </div>
     <div style="padding-bottom: 10px">
         <select class="form-control" id="condition1">
-            <option name="rpps_s_q61">Condition 1</option>
+            <option>Condition 1</option>
             <?php
-            $selected = "";
-            if($_SESSION[$_GET['pid']."_dash_condition1_val"] == "0"){
-                 $selected = "selected";
+            foreach ($condition as $index=>$cond){
+                $selected = "";
+                if($_SESSION[$_GET['pid']."_dash_condition1_val"] == $index && array_key_exists('dash',$_GET)){
+                    $selected = "selected";
+                }
+                echo '<option name="'.$cond.'" value="'.$index.'" multiple1="'.$condition_multiple[$index].'" '.$selected.'>'.$module->getFieldLabel($cond).'</option>';
             }
             ?>
-            <option name="rpps_s_q61" value="0" <?=$selected;?>>Race</option>
         </select>
     </div>
     <div style="padding-bottom: 10px">
         <select class="form-control" id="condition2">
-            <option name="rpps_s_q15">Condition 2</option>
+            <option>Condition 2</option>
             <?php
-            $selected = "";
-            if($_SESSION[$_GET['pid']."_dash_condition2_val"] == "0"){
-            $selected = "selected";
+            foreach ($condition as $index=>$cond){
+                $selected = "";
+                if($_SESSION[$_GET['pid']."_dash_condition2_val"] == $index && array_key_exists('dash',$_GET)){
+                    $selected = "selected";
+                }
+                echo '<option name="'.$cond.'" value="'.$index.'" multiple2="'.$condition_multiple[$index].'" '.$selected.'>'.$module->getFieldLabel($cond).'</option>';
             }
             ?>
-            <option name="rpps_s_q15" value="0" <?=$selected;?>>Did the study require that you already have a disease or condition in order to enroll?</option>
         </select>
     </div>
     <button onclick='loadTable(<?=json_encode($module->getUrl("loadTable.php"))?>);' class="btn btn-primary" style="float:right" id="loadTablebtn">Load Table</button>
@@ -96,10 +105,12 @@ $rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
             $condition1_var = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_condition1_var"], $project_id);
             $condition2_var = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_condition2_var"], $project_id);
 
-            $filters = explode(',',$_SESSION[$_GET['pid']."_dash_filter_val"]);
             $params = "";
-            foreach ($filters as $fvalue){
-             $params .= "[".$_SESSION[$_GET['pid']."_dash_filter_var"]."] = '".$fvalue."' AND";
+            if(!empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])) {
+                $filters = explode(',', $_SESSION[$_GET['pid'] . "_dash_filter_val"]);
+                foreach ($filters as $fvalue) {
+                    $params .= "[" . $_SESSION[$_GET['pid'] . "_dash_filter_var"] . "] = '" . $fvalue . "' AND ";
+                }
             }
 
             $table = '<table class="table table-bordered" id="table_archive"><thead>
@@ -148,7 +159,7 @@ $rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
                     if($total_cond1 < $max){
                         $table .= "<td>NULL (<".$max.")</td>";
                     }else{
-                        $table .= "<td>".$average." (".$std_deviation.") (".$total_cond1.",".$missing.")</td>";
+                        $table .= "<td><span class='mean'>".$average." (".$std_deviation.") (".$total_cond1.",".$missing.")</span><span class='topscore'></span></td>";
                     }
 
                 }
@@ -159,7 +170,13 @@ $rpps_s_q15 = $module->getChoiceLabels('rpps_s_q15', $project_id);
                 if($missing_total[$index2] < $max){
                     $table .= "<td>NULL (<".$max.")</td>";
                 }else{
-                    $table .= "<td>".$missing_total[$index2]."</td>";
+                    $table .= "<td><span class='mean'>".$missing_total[$index2]."</span><span class='topscore'></span></td>";
+                }
+            }
+            if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
+                $table .= "<tr><td><strong>MUTIPLE</strong></td>";
+                foreach ($condition2_var as $index2 => $cond2){
+                    $table .= "<td></td>";
                 }
             }
             $table .= "</tbody></table>";
