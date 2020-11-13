@@ -42,13 +42,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             ?>
         </select>
     </div>
-    <?php
-    $visible = "";
-    if(!empty($_SESSION[$_GET['pid']."_dash_filter_val"]) && array_key_exists('dash',$_GET)){
-        $visible = "visible";
-    }
-    ?>
-    <div id="filterBy" style="padding-bottom: 10px;width:100%" class="dropdown-check-list <?=$visible?>" tabindex="100">
+    <div id="filterBy" style="padding-bottom: 10px;width:100%" class="dropdown-check-list" tabindex="100">
         <span class="anchor form-control">Filter By...</span>
         <ul class="items" id="filter">
             <?php
@@ -67,9 +61,10 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                                 }
                             }
                         }
+                    }else{
+                        $checked = "checked";
                     }
-
-                    echo "<li><input type='checkbox' onclick='selectOnlyOneGroup(this)' name='".$filter."' value='".$key."' ".$checked."> ".$option."</li>";
+                    echo "<li><input type='checkbox' name='".$filter."' value='".$key."' ".$checked."> ".$option."</li>";
                 }
 
             }

@@ -47,7 +47,7 @@ class ProjectData
                                         $array[$index][$field_name] = array();
                                     }
 
-                                    if($value != "" && !is_array($value)){
+                                    if($value != "" && (!is_array($value) || (is_array($value) && !empty($value)))){
                                         $datarepeat[$field_name][$instance] = $value;
                                         $count = 0;
                                         foreach ($filterLogic as $filterkey => $filtervalue){

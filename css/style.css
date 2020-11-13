@@ -80,18 +80,18 @@ option {
     position: relative;
     cursor: pointer;
     display: inline-block;
-    padding: 5px 50px 5px 10px;
+    padding: 5px 50px 5px 15px;
     border: 1px solid #ccc;
 }
 
 .dropdown-check-list .anchor:after {
     position: absolute;
     content: "";
-    border-left: 2px solid black;
-    border-top: 2px solid black;
-    padding: 5px;
-    right: 10px;
-    top: 20%;
+    border-left: 2px solid #555;
+    border-top: 2px solid #555;
+    padding: 2.3px 2.3px 2.3px 2.3px;
+    right: 5px;
+    top: 35%;
     -moz-transform: rotate(-135deg);
     -ms-transform: rotate(-135deg);
     -o-transform: rotate(-135deg);
