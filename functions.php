@@ -10,4 +10,20 @@ function std_deviation($my_arr)
     }
     return (float)sqrt($var/$no_element);
 }
+function isTopScore($value,$topScoreMax){
+    if($topScoreMax == 5 && $value == 5){
+        return true;
+    }else if($topScoreMax == 10 && ($value == 9 || $value == 10)) {
+        return true;
+    }
+    return false;
+}
+
+function getParamOnType($field_name,$index){
+    $type = \REDCap::getFieldType($field_name);
+    if($type == "checkbox"){
+        return "[".$field_name."(".$index.")] = '1'";
+    }
+    return "[".$field_name."] = '".$index."'";
+}
 ?>

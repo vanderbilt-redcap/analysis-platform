@@ -7,7 +7,6 @@ $outcome = $module->getProjectSetting('outcome-field');
 $filterby = $module->getProjectSetting('filterby-field');
 $condition = $module->getProjectSetting('condition-field');
 $condition_multiple = $module->getProjectSetting('condition-multiple');
-
 ?>
 <script>
     $(document).ready(function() {
@@ -28,14 +27,14 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             <?php
             $selected = "";
             if(empty($_SESSION[$_GET['pid']."_dash_outcome_val"])){
-                echo "HELLO";
                 $selected = "selected";
+
             }?>
             <option <?=$selected?>>Outcome</option>
             <?php
             foreach ($outcome as $index=>$out){
                 $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_outcome_val"] == $index && array_key_exists('dash',$_GET)){
+                if($_SESSION[$_GET['pid']."_dash_outcome_val"] != "" && $_SESSION[$_GET['pid']."_dash_outcome_val"] == $index && array_key_exists('dash',$_GET)){
                     $selected = "selected";
                 }
                 echo '<option name="'.$out.'" value="'.$index.'" '.$selected.'>'.$module->getFieldLabel($out).'</option>';
@@ -83,7 +82,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             <?php
             foreach ($condition as $index=>$cond){
                 $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_condition1_val"] == $index && array_key_exists('dash',$_GET)){
+                if($_SESSION[$_GET['pid']."_dash_condition1_val"] != "" && $_SESSION[$_GET['pid']."_dash_condition1_val"] == $index && array_key_exists('dash',$_GET)){
                     $selected = "selected";
                 }
                 echo '<option name="'.$cond.'" value="'.$index.'" multiple1="'.$condition_multiple[$index].'" '.$selected.'>'.$module->getFieldLabel($cond).'</option>';
@@ -97,7 +96,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             <?php
             foreach ($condition as $index=>$cond){
                 $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_condition2_val"] == $index && array_key_exists('dash',$_GET)){
+                if($_SESSION[$_GET['pid']."_dash_condition2_val"] != "" && $_SESSION[$_GET['pid']."_dash_condition2_val"] == $index && array_key_exists('dash',$_GET)){
                     $selected = "selected";
                 }
                 echo '<option name="'.$cond.'" value="'.$index.'" multiple2="'.$condition_multiple[$index].'" '.$selected.'>'.$module->getFieldLabel($cond).'</option>';
@@ -108,11 +107,30 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
     <button onclick='loadTable(<?=json_encode($module->getUrl("loadTable.php"))?>);' class="btn btn-primary" style="float:right" id="loadTablebtn">Load Table</button>
 </div>
 <div class="optionSelect" style="padding-top: 20px" id="loadTable">
+    <script>
+        $(document).ready(function() {
+            $("#options td").click(function(){
+                if($(this).attr('id') == "mean"){
+                    $('.mean').show();
+                    $('.topscore').hide();
+                    $('#topscore').removeClass('selected');
+                    $('#mean').addClass('selected');
+                }else if($(this).attr('id') == "topscore"){
+                    $('.mean').hide();
+                    $('.topscore').show();
+                    $('#topscore').addClass('selected');
+                    $('#mean').removeClass('selected');
+                }
+            });
+            });
+    </script>
         <?php
         if(!empty($_GET['dash']) && ProjectData::startTest($_GET['dash'], $secret_key, $secret_iv, $_SESSION[$project_id."_dash_timestamp"])){
             $project_id = $_GET['pid'];
             $condition1_var = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_condition1_var"], $project_id);
             $condition2_var = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_condition2_var"], $project_id);
+            $outcome_labels = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_outcome_var"], $project_id);
+            $topScoreMax = explode(" ",$outcome_labels[count($outcome_labels)-1])[0];
 
             $params = "";
             if(!empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])) {
@@ -122,7 +140,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 }
             }
 
-            $table = '<table class="table table-bordered" id="table_archive"><thead>
+            $table = '<table class="table table-bordered pull-left" id="table_archive"><thead>
             <tr><th> </th>';
             foreach ($condition2_var as $index2 => $cond2){
                 $table .= "<th>".$index2.", ".$cond2."</th>";
@@ -135,14 +153,15 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 $table .= "<tr><td><strong>".$index1.", ".$cond1."</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2){
                     $RecordSet = \REDCap::getData($project_id, 'array', null,null,null,null,false,false,false,
-                        $params." 
-                        [".$_SESSION[$_GET['pid']."_dash_condition1_var"]."(".$index1.")] = '1' AND
-                        [".$_SESSION[$_GET['pid']."_dash_condition2_var"]."] = '".$index2."'
-                        ");
+                        $params
+                        .getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1)." AND "
+                        .getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2)
+                     );
                     $records = ProjectData::getProjectInfoArray($RecordSet);
                     $array_mean = array();
                     $missing = 0;
                     $total_cond1 = 0;
+                    $top_score = 0;
                     foreach ($records as $record){
                         if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
                             #MISSING
@@ -151,6 +170,10 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                             #TOTAL COND 1 COUNT
                             $total_cond1 += 1;
                             array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
+
+                            if(isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
+                                $top_score += 1;
+                            }
                         }
                     }
 
@@ -164,11 +187,12 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         $std_deviation = number_format(std_deviation($array_mean),2);
                     }
                     $missing_total[$index2] = $missing_total[$index2]+$missing;
+                    $total_score_percent = number_format((($top_score/$total_cond1)*100),2);
 
                     if($total_cond1 < $max){
                         $table .= "<td>NULL (<".$max.")</td>";
                     }else{
-                        $table .= "<td><span class='mean'>".$average." (".$std_deviation.") (".$total_cond1.",".$missing.")</span><span class='topscore'></span></td>";
+                        $table .= "<td><span class='mean'>".$average." (".$std_deviation.") (".$total_cond1.",".$missing.")</span><span class='topscore'>".$total_score_percent." %</span></td>";
                     }
 
                 }
@@ -179,19 +203,44 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 if($missing_total[$index2] < $max){
                     $table .= "<td>NULL (<".$max.")</td>";
                 }else{
-                    $table .= "<td><span class='mean'>".$missing_total[$index2]."</span><span class='topscore'></span></td>";
+                    $table .= "<td>".$missing_total[$index2]."</td>";
                 }
             }
             if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
                 $table .= "<tr><td><strong>MUTIPLE</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2){
-                    $table .= "<td></td>";
+                    $RecordSetMultiple = \REDCap::getData($project_id, 'array', null,null,null,null,false,false,false,
+                        $params."
+                        [".$_SESSION[$_GET['pid']."_dash_condition2_var"]."] = '".$index2."'
+                        ");
+                    $recordsMultiple = ProjectData::getProjectInfoArray($RecordSetMultiple);
+                    $multiples_total = 0;
+                    foreach ($recordsMultiple as $record) {
+                        $multiples = array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1];
+                        if($multiples > 0){
+                            $multiples_total += 1;
+                        }
+                    }
+                    if($multiples_total < $max){
+                        $table .= "<td>NULL (<".$max.")</td>";
+                    }else{
+                        $table .= "<td>".$multiples_total."</td>";
+                    }
                 }
             }
             $table .= "</tbody></table>";
+            $table .="<table class='table table-bordered pull-right' id='options'>
+                    <tr>
+                        <td class='selected' id='mean'>Mean (SD) (n, Missing)</td>
+                    </tr>
+                    <tr>
+                        <td id='topscore'>% Top score</td>
+                    </tr>
+                    
+                    </table>";
             echo $table;
+
         }
 
         ?>
-    </table>
 </div>
