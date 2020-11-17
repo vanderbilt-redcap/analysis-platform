@@ -153,41 +153,15 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         .getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2)
                      );
                     $records = ProjectData::getProjectInfoArray($RecordSet);
-                    $array_mean = array();
-                    $missing = 0;
-                    $total_cond1 = 0;
-                    $top_score = 0;
-                    foreach ($records as $record){
-                        if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
-                            #MISSING
-                            $missing += 1;
-                        }else{
-                            #TOTAL COND 1 COUNT
-                            $total_cond1 += 1;
-                            array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
+                    $calculations = getCalculations($records,$topScoreMax);
 
-                            if(isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
-                                $top_score += 1;
-                            }
-                        }
-                    }
+                    $missing_total[$index2] = $missing_total[$index2]+$calculations['missing'];
 
-                    $average = 0;
-                    $std_deviation = 0;
-                    if(!empty($array_mean)){
-                        #AVERAGE
-                        $average = number_format(array_sum($array_mean)/count($array_mean),2);
 
-                        #STANDARD DEVIATION
-                        $std_deviation = number_format(std_deviation($array_mean),2);
-                    }
-                    $missing_total[$index2] = $missing_total[$index2]+$missing;
-                    $total_score_percent = number_format((($top_score/$total_cond1)*100),2);
-
-                    if($total_cond1 < $max){
+                    if($calculations['total'] < $max){
                         $table .= "<td>NULL (<".$max.")</td>";
                     }else{
-                        $table .= "<td><span class='mean'>".$average." (".$std_deviation.") (".$total_cond1.",".$missing.")</span><span class='topscore'>".$total_score_percent." %</span></td>";
+                        $table .= "<td><span class='mean'>".$calculations['calc']."</span><span class='topscore'>".$calculations['total_score_percent']." %</span></td>";
                     }
 
                 }
@@ -209,17 +183,12 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         [".$_SESSION[$_GET['pid']."_dash_condition2_var"]."] = '".$index2."'
                         ");
                     $recordsMultiple = ProjectData::getProjectInfoArray($RecordSetMultiple);
-                    $multiples_total = 0;
-                    foreach ($recordsMultiple as $record) {
-                        $multiples = array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1];
-                        if($multiples > 0){
-                            $multiples_total += 1;
-                        }
-                    }
-                    if($multiples_total < $max){
+
+                    $calculations = getCalculations($recordsMultiple,$topScoreMax);
+                    if($calculations['total'] < $max){
                         $table .= "<td>NULL (<".$max.")</td>";
                     }else{
-                        $table .= "<td>".$multiples_total."</td>";
+                        $table .= "<td><span class='mean'>".$calculations['calc']."</span><span class='topscore'>".$calculations['total_score_percent']." %</span></td>";
                     }
                 }
             }
