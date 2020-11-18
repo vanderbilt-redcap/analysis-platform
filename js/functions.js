@@ -26,10 +26,13 @@ function loadTable(url){
         var filterArray = $('#filter li input:checked').map(function () {
             return this.value;
         }).get().join(",");
+        var filterNameArray = $('#filter li input:checked').map(function () {
+            return $(this).attr('name');
+        }).get().join(",");
         if($('#filter li input:checked').attr('name') == undefined){
             var filter = "";
         }else{
-            var filter = "&filtervar=" + $('#filter li input:checked').attr('name') + "&filterval=" + filterArray;
+            var filter = "&filtervar=" + filterNameArray + "&filterval=" + filterArray;
         }
 
         var condition1 = "&condition1var=" + $('#condition1 option:selected').attr('name') + "&condition1val=" + $('#condition1').val();

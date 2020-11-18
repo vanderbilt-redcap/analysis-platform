@@ -50,21 +50,24 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 $filter_options = $module->getChoiceLabels($filter, $project_id);
                 echo '<label class="select-header">'.$module->getFieldLabel($filter).'</label>';
                 foreach ($filter_options as $key => $option){
-                    $checked = "";
                     if(!empty($_SESSION[$_GET['pid'] . "_dash_filter_val"]) && array_key_exists('dash',$_GET)) {
                         $filters = explode(',', $_SESSION[$_GET['pid'] . "_dash_filter_val"]);
-                        if($filter == $_SESSION[$_GET['pid'] . "_dash_filter_var"]){
-                            $checked = "";
-                            foreach ($filters as $fvalue){
-                                if($fvalue == $key){
+                        $checked = "";
+                        foreach ($filters as $index => $sfilter) {
+                            $filter_data= explode('*', $sfilter);
+                            if($filter == $filter_data[0]){
+                                if($filter_data[1] == $key){
                                     $checked = "checked";
                                 }
+
                             }
                         }
+                    }else if(array_key_exists('dash',$_GET) && empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])){
+                        $checked = "";
                     }else{
                         $checked = "checked";
                     }
-                    echo "<li><input type='checkbox' name='".$filter."' value='".$key."' ".$checked."> ".$option."</li>";
+                    echo "<li><input type='checkbox' name='".$filter."' value='".$filter."*".$key."' ".$checked."> ".$option."</li>";
                 }
 
             }
@@ -127,12 +130,29 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             $outcome_labels = $module->getChoiceLabels($_SESSION[$_GET['pid']."_dash_outcome_var"], $project_id);
             $topScoreMax = explode(" ",$outcome_labels[count($outcome_labels)-1])[0];
 
-            $params = "";
+            $params = "(";
             if(!empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])) {
                 $filters = explode(',', $_SESSION[$_GET['pid'] . "_dash_filter_val"]);
-                foreach ($filters as $fvalue) {
-                    $params .= "[" . $_SESSION[$_GET['pid'] . "_dash_filter_var"] . "] = '" . $fvalue . "' AND ";
+                $aux_var_name = "";
+                $numItems = count($filters);
+                $i = 0;
+                foreach ($filters as $index => $filter) {
+                    $filter_data= explode('*', $filter);
+                    $option = " OR ";
+                    if($aux_var_name == ""){
+                        $aux_var_name = $filter_data[0];
+                        $option = "";
+                    }
+                    if($aux_var_name != $filter_data[0]){
+                        $aux_var_name = $filter_data[0];
+                        $option = ") AND (";
+                    }
+                    if(++$i === $numItems && $aux_var_name != $filter_data[0]) {
+                        $option = ") AND (";
+                    }
+                    $params .= $option.getParamOnType($filter_data[0],$filter_data[1]);
                 }
+                $params .= ")";
             }
 
             $table = '<table class="table table-bordered pull-left" id="table_archive"><thead>
@@ -143,27 +163,42 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
 
             $table .= "</tr></thead><tbody>";
 
+            $RecordSetParams = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                $params
+            );
+            $recordsParams = ProjectData::getProjectInfoArray($RecordSetParams);
+
             $missing_total = array();
             foreach ($condition1_var as $index1 => $cond1) {
                 $table .= "<tr><td><strong>".$index1.", ".$cond1."</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2){
-                    $RecordSet = \REDCap::getData($project_id, 'array', null,null,null,null,false,false,false,
-                        $params
-                        .getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1)." AND "
-                        .getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2)
-                     );
+                    $condition1 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1)." AND ";
+                    $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                    $RecordSet = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                     $condition1.
+                     $condition2
+                    );
                     $records = ProjectData::getProjectInfoArray($RecordSet);
-                    $calculations = getCalculations($records,$topScoreMax);
+                    $arrayResult = array();
 
-                    $missing_total[$index2] = $missing_total[$index2]+$calculations['missing'];
-
-
-                    if($calculations['total'] < $max){
-                        $table .= "<td>NULL (<".$max.")</td>";
-                    }else{
-                        $table .= "<td><span class='mean'>".$calculations['calc']."</span><span class='topscore'>".$calculations['total_score_percent']." %</span></td>";
+                    foreach ($recordsParams as $index => $paramRecord) {
+                        foreach ($records as $record){
+                             if($record['record_id'] == $paramRecord['record_id']){
+                                 array_push($arrayResult,$record);
+                             }
+                         }
                     }
+                    $calculations = getCalculations($arrayResult, $topScoreMax);
 
+                    $missing_total[$index2] = $missing_total[$index2] + $calculations['missing'];
+
+                    if(count($arrayResult) == 0){
+                     $table .= "<td>NULL</td>";
+                    }else if ($calculations['total'] < $max) {
+                     $table .= "<td>NULL (<" . $max . ")</td>";
+                    } else {
+                     $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                    }
                 }
                 $table .= "</tr>";
             }
@@ -177,18 +212,27 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             }
             if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
                 $table .= "<tr><td><strong>MUTIPLE</strong></td>";
-                foreach ($condition2_var as $index2 => $cond2){
-                    $RecordSetMultiple = \REDCap::getData($project_id, 'array', null,null,null,null,false,false,false,
-                        $params."
-                        [".$_SESSION[$_GET['pid']."_dash_condition2_var"]."] = '".$index2."'
-                        ");
+                foreach ($condition2_var as $index2 => $cond2) {
+                    $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                    $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                        $condition2
+                    );
                     $recordsMultiple = ProjectData::getProjectInfoArray($RecordSetMultiple);
-
-                    $calculations = getCalculations($recordsMultiple,$topScoreMax);
-                    if($calculations['total'] < $max){
-                        $table .= "<td>NULL (<".$max.")</td>";
-                    }else{
-                        $table .= "<td><span class='mean'>".$calculations['calc']."</span><span class='topscore'>".$calculations['total_score_percent']." %</span></td>";
+                    $arrayResult = array();
+                    foreach ($recordsParams as $index => $paramRecord) {
+                        foreach ($recordsMultiple as $record){
+                            if($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1] > 1){
+                                array_push($arrayResult,$record);
+                            }
+                        }
+                    }
+                    $calculations = getCalculations($arrayResult, $topScoreMax);
+                    if(count($arrayResult) == 0){
+                        $table .= "<td>NULL</td>";
+                    }else if ($calculations['total'] < $max) {
+                        $table .= "<td>NULL (<" . $max . ")</td>";
+                    } else {
+                        $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                     }
                 }
             }
