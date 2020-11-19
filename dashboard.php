@@ -189,12 +189,8 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                          }
                     }
                     $calculations = getCalculations($arrayResult, $topScoreMax);
-
                     $missing_total[$index2] = $missing_total[$index2] + $calculations['missing'];
-
-                    if(count($arrayResult) == 0){
-                     $table .= "<td>NULL</td>";
-                    }else if ($calculations['total'] < $max) {
+                    if ($calculations['total'] < $max) {
                      $table .= "<td>NULL (<" . $max . ")</td>";
                     } else {
                      $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
@@ -202,6 +198,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 }
                 $table .= "</tr>";
             }
+
             $table .= "<tr><td><strong>MISSING</strong></td>";
             foreach ($condition2_var as $index2 => $cond2){
                 if($missing_total[$index2] < $max){
@@ -227,9 +224,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         }
                     }
                     $calculations = getCalculations($arrayResult, $topScoreMax);
-                    if(count($arrayResult) == 0){
-                        $table .= "<td>NULL</td>";
-                    }else if ($calculations['total'] < $max) {
+                    if ($calculations['total'] < $max) {
                         $table .= "<td>NULL (<" . $max . ")</td>";
                     } else {
                         $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";

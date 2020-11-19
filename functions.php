@@ -34,23 +34,19 @@ function getCalculations($records,$topScoreMax){
     $total_cond1 = 0;
     $top_score = 0;
     foreach ($records as $record) {
-        $multiples = array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1];
-        if($multiples > 1){
-            $multiples_total += 1;
-            if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
-                #MISSING
-                $missing += 1;
-            }else{
-                #TOTAL COND 1 COUNT
-                $total_cond1 += 1;
-                array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
-
-                if(isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
-                    $top_score += 1;
-                }
+        if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
+            #MISSING
+            $missing += 1;
+        }else{
+            #TOTAL COND 1 COUNT
+            $total_cond1 += 1;
+            array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
+            if(isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
+                $top_score += 1;
             }
         }
     }
+
     $average = 0;
     $std_deviation = 0;
     if(!empty($array_mean)) {
@@ -62,7 +58,6 @@ function getCalculations($records,$topScoreMax){
     }
     $calc = $average." (".$std_deviation.") (".$total_cond1.",".$missing.")";
     $total_score_percent = number_format((($top_score/$total_cond1)*100),2);
-
-    return array("total" => $multiples_total, "calc" => $calc, "missing" => $missing, "total_score_percent" => $total_score_percent);
+    return array("total" => $total_cond1, "calc" => $calc, "missing" => $missing, "total_score_percent" => $total_score_percent);
 }
 ?>
