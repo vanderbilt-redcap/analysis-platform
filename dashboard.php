@@ -62,7 +62,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
 
                             }
                         }
-                    }else if(array_key_exists('dash',$_GET) && empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])){
+                    }else if(array_key_exists('dash',$_GET) && empty($_SESSION[$_GET['pid'] . "_dash_filter_val"]) && !empty($_SESSION[$_GET['pid'] . "_dash_outcome_val"])){
                         $checked = "";
                     }else{
                         $checked = "checked";
