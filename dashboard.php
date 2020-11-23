@@ -51,7 +51,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 echo '<label class="select-header">'.$module->getFieldLabel($filter).'</label>';
                 foreach ($filter_options as $key => $option){
                     $checked = "";
-                    if(array_key_exists('dash',$_GET) && !array_key_exists($_GET['pid'] . "_dash_filter_val",$_SESSION) && empty($_SESSION[$_GET['pid'] . "_dash_filter_val"])){
+                    if(!array_key_exists('dash',$_GET) || (array_key_exists('dash',$_GET) && !array_key_exists($_GET['pid'] . "_dash_filter_val",$_SESSION) && empty($_SESSION[$_GET['pid'] . "_dash_filter_val"]))){
                         $checked = "checked";
                     }else if(array_key_exists('dash',$_GET) && array_key_exists($_GET['pid'] . "_dash_filter_val",$_SESSION) && $_SESSION[$_GET['pid'] . "_dash_filter_val"] == ""){
                         $checked = "";
@@ -161,6 +161,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             foreach ($condition2_var as $index2 => $cond2){
                 $table .= "<th>".$index2.", ".$cond2."</th>";
             }
+            $table .= "<th>MISSING</th>";
 
             $table .= "</tr></thead><tbody>";
 
@@ -172,11 +173,11 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             $missing_total = array();
             foreach ($condition1_var as $index1 => $cond1) {
                 $table .= "<tr><td><strong>".$index1.", ".$cond1."</strong></td>";
+                $condition1 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1);
                 foreach ($condition2_var as $index2 => $cond2){
-                    $condition1 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1)." AND ";
                     $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
                     $RecordSet = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
-                     $condition1.
+                     $condition1." AND ".
                      $condition2
                     );
                     $records = ProjectData::getProjectInfoArray($RecordSet);
@@ -197,17 +198,31 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                      $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                     }
                 }
+                #MISSING BY COLUMN
+                $RecordSetMissingRow = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                    $condition1
+                );
+                $recordsMissingRow = ProjectData::getProjectInfoArray($RecordSetMissingRow);
+                $arrayResult = array();
+                foreach ($recordsParams as $index => $paramRecord) {
+                    foreach ($recordsMissingRow as $record){
+                        if($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1] == 0){
+                            array_push($arrayResult,$record);
+                        }
+                    }
+                }
+                $calculations = getCalculations($arrayResult, $topScoreMax);
+                if ($calculations['total'] < $max) {
+                    $table .= "<td>NULL (<" . $max . ")</td>";
+                } else {
+                    $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                }
                 $table .= "</tr>";
             }
 
+            #MISSING BY ROW
             $table .= "<tr><td><strong>MISSING</strong></td>";
             foreach ($condition2_var as $index2 => $cond2){
-//                if($missing_total[$index2] < $max){
-//                    $table .= "<td>NULL (<".$max.")</td>";
-//                }else{
-//                    $table .= "<td>".$missing_total[$index2]."</td>";
-//                }
-
                 $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
                 $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
                     $condition2
@@ -228,6 +243,19 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                     $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                 }
             }
+            $arrayResult = array();
+            foreach ($recordsParams as $index => $paramRecord) {
+               if(array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1] == 0 && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition2_var"]])[1] == 0){
+                   array_push($arrayResult,$record);
+               }
+            }
+            $calculations = getCalculations($arrayResult, $topScoreMax);
+            if ($calculations['total'] < $max) {
+                $table .= "<td>NULL (<" . $max . ")</td>";
+            } else {
+                $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+            }
+            $table .= "</tr>";
             if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
                 $table .= "<tr><td><strong>MUTIPLE</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2) {
@@ -251,6 +279,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                     }
                 }
+                $table .= "</tr>";
             }
             $table .= "</tbody></table>";
             $table .="<table class='table table-bordered pull-right' id='options'>
