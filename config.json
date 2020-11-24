@@ -26,7 +26,7 @@
 
   "no-auth-pages":["index"],
 
-  "description": "Givren an outcome and a couple of conditions it creates a table of mean and top score.",
+  "description": "Given an outcome and a couple of conditions it creates a table of mean and top score.",
 
   "project-settings": [
     {
