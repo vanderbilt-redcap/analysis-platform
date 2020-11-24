@@ -1,5 +1,5 @@
 <?php
-namespace Vanderbilt\RppsReportingExternalModule;
+namespace Vanderbilt\AnalysisPlatformExternalModule;
 require_once (dirname(__FILE__)."/classes/ProjectData.php");
 
 $RecordSetSettings = \REDCap::getData(IEDEA_SETTINGS, 'array', null);

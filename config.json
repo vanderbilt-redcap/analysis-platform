@@ -1,7 +1,7 @@
 {
-  "name": "RPPS Reporting",
+  "name": "Analysis Platform",
 
-  "namespace": "Vanderbilt\\RppsReportingExternalModule",
+  "namespace": "Vanderbilt\\AnalysisPlatformExternalModule",
   "framework-version": 5,
   "authors": [
     {
@@ -16,7 +16,7 @@
   "links": {
     "project": [
       {
-        "name": "RPPS Reporting",
+        "name": "Analysis Platform",
         "icon": "fas fa-chart-area",
         "url": "index.php",
         "target": "_blank"
@@ -26,7 +26,7 @@
 
   "no-auth-pages":["index"],
 
-  "description": "RPPS Reporting",
+  "description": "Analysis Platform",
 
   "project-settings": [
     {

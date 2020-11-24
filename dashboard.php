@@ -1,5 +1,5 @@
 <?php
-namespace Vanderbilt\RppsReportingExternalModule;
+namespace Vanderbilt\AnalysisPlatformExternalModule;
 require_once (dirname(__FILE__)."/classes/ProjectData.php");
 $project_id = $_GET['pid'];
 $max = $module->getProjectSetting('max');

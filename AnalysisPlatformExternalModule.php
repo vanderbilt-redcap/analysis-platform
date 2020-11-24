@@ -1,12 +1,12 @@
 <?php
-namespace Vanderbilt\RppsReportingExternalModule;
+namespace Vanderbilt\AnalysisPlatformExternalModule;
 
 use Exception;
 use REDCap;
 use ExternalModules\AbstractExternalModule;
 use ExternalModules\ExternalModules;
 
-class RppsReportingExternalModule extends AbstractExternalModule
+class AnalysisPlatformExternalModule extends AbstractExternalModule
 {
     
 }

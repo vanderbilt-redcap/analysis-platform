@@ -1,5 +1,5 @@
 <?php
-namespace Vanderbilt\RppsReportingExternalModule;
+namespace Vanderbilt\AnalysisPlatformExternalModule;
 
 
 class ProjectData

@@ -1,5 +1,5 @@
 <?php
-namespace Vanderbilt\RppsReportingExternalModule;
+namespace Vanderbilt\AnalysisPlatformExternalModule;
 
 use ExternalModules\AbstractExternalModule;
 use ExternalModules\ExternalModules;
@@ -49,11 +49,11 @@ use ExternalModules\ExternalModules;
     <meta name="theme-color" content="#fff">
     <link rel="icon" href="">
 
-    <title>RPPS Reporting</title>
+    <title>Analysis Platform</title>
 </head>
 <body>
     <div class="container">
-        <h3 class="header">RPPS Reporting</h3>
+        <h3 class="header">Analysis Platform</h3>
         <?php include_once ('dashboard.php');?>
     </div>
 </body>
