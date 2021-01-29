@@ -239,7 +239,6 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 $missing_row_n = 0;
                 $missing_row_missing = 0;
                 $top_score = 0;
-                $top_score = 0;
                 $array_mean = array();
                 foreach ($arrayResult as $missingRow){
                     if(!array_key_exists($_SESSION[$_GET['pid']."_dash_condition1_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_condition1_var"]] == ""){
@@ -248,10 +247,10 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
                             $missing_row_missing += 1;
                         }
-                    }
-                    if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
-                        #MISSING
-                        $missing += 1;
+                        array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
+                        if(\Vanderbilt\AnalysisPlatformExternalModule\isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
+                            $top_score += 1;
+                        }
                     }
                 }
                 $average = 0;
@@ -264,8 +263,8 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                     $std_deviation = number_format(\Vanderbilt\AnalysisPlatformExternalModule\std_deviation($array_mean), 2);
                 }
                 $calc = $average." (".$std_deviation.") (".$missing_row_n.",".$missing_row_missing.")";
-                $total_score_percent = number_format((($missing/$missing_row_n)*100),2);
-                $calculations = array("calc" => $calc, "missing" => $missing, "total_score_percent" => $total_score_percent);
+                $total_score_percent = number_format((($top_score/$missing_row_n)*100),2);
+                $calculations = array("calc" => $calc, "total_score_percent" => $total_score_percent);
 
                 if ($calculations['total'] < $max) {
                     $table .= "<td>NULL (<" . $max . ")</td>";
