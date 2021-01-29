@@ -1,4 +1,6 @@
 <?php
+namespace Vanderbilt\AnalysisPlatformExternalModule;
+
 function std_deviation($my_arr)
 {
     $no_element = count($my_arr);
@@ -41,7 +43,7 @@ function getCalculations($records,$topScoreMax){
             #TOTAL COND 1 COUNT
             $total_cond1 += 1;
             array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
-            if(isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
+            if(\Vanderbilt\AnalysisPlatformExternalModule\isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
                 $top_score += 1;
             }
         }
@@ -54,7 +56,7 @@ function getCalculations($records,$topScoreMax){
         $average = number_format(array_sum($array_mean) / count($array_mean), 2);
 
         #STANDARD DEVIATION
-        $std_deviation = number_format(std_deviation($array_mean), 2);
+        $std_deviation = number_format(\Vanderbilt\AnalysisPlatformExternalModule\std_deviation($array_mean), 2);
     }
     $calc = $average." (".$std_deviation.") (".$total_cond1.",".$missing.")";
     $total_score_percent = number_format((($top_score/$total_cond1)*100),2);

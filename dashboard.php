@@ -151,7 +151,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                     if(++$i === $numItems && $aux_var_name != $filter_data[0]) {
                         $option = ") AND (";
                     }
-                    $params .= $option.getParamOnType($filter_data[0],$filter_data[1]);
+                    $params .= $option.\Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($filter_data[0],$filter_data[1]);
                 }
                 $params .= ")";
             }
@@ -173,9 +173,9 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             $missing_total = array();
             foreach ($condition1_var as $index1 => $cond1) {
                 $table .= "<tr><td><strong>".$index1.", ".$cond1."</strong></td>";
-                $condition1 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1);
+                $condition1 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1);
                 foreach ($condition2_var as $index2 => $cond2){
-                    $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                    $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
                     $RecordSet = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
                      $condition1." AND ".
                      $condition2
@@ -190,7 +190,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                              }
                          }
                     }
-                    $calculations = getCalculations($arrayResult, $topScoreMax);
+                    $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
                     $missing_total[$index2] = $missing_total[$index2] + $calculations['missing'];
                     if ($calculations['total'] < $max) {
                      $table .= "<td>NULL (<" . $max . ")</td>";
@@ -211,7 +211,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         }
                     }
                 }
-                $calculations = getCalculations($arrayResult, $topScoreMax);
+                $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
                 if ($calculations['total'] < $max) {
                     $table .= "<td>NULL (<" . $max . ")</td>";
                 } else {
@@ -222,7 +222,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             #MISSING BY ROW
             $table .= "<tr><td><strong>MISSING</strong></td>";
             foreach ($condition2_var as $index2 => $cond2){
-                $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
                 $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
                     $condition2
                 );
@@ -261,7 +261,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                     $average = number_format(array_sum($array_mean) / count($array_mean), 2);
 
                     #STANDARD DEVIATION
-                    $std_deviation = number_format(std_deviation($array_mean), 2);
+                    $std_deviation = number_format(\Vanderbilt\AnalysisPlatformExternalModule\std_deviation($array_mean), 2);
                 }
                 $calc = $average." (".$std_deviation.") (".$missing_row_n.",".$missing_row_missing.")";
                 $total_score_percent = number_format((($missing/$missing_row_n)*100),2);
@@ -280,7 +280,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                    array_push($arrayResult,$record);
                }
             }
-            $calculations = getCalculations($arrayResult, $topScoreMax);
+            $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
             if ($calculations['total'] < $max) {
                 $table .= "<td>NULL (<" . $max . ")</td>";
             } else {
@@ -290,7 +290,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
                 $table .= "<tr><td><strong>MUTIPLE</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2) {
-                    $condition2 = getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                    $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
                     $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
                         $condition2
                     );
@@ -303,7 +303,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                             }
                         }
                     }
-                    $calculations = getCalculations($arrayResult, $topScoreMax);
+                    $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
                     if ($calculations['total'] < $max) {
                         $table .= "<td>NULL (<" . $max . ")</td>";
                     } else {
