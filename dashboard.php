@@ -219,7 +219,6 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 }
                 $table .= "</tr>";
             }
-
             #MISSING BY ROW
             $table .= "<tr><td><strong>MISSING</strong></td>";
             foreach ($condition2_var as $index2 => $cond2){
@@ -236,12 +235,44 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                         }
                     }
                 }
-                $calculations = getCalculations($arrayResult, $topScoreMax);
+                #MISSING CALCULATIONS
+                $missing_row_n = 0;
+                $missing_row_missing = 0;
+                $top_score = 0;
+                $top_score = 0;
+                $array_mean = array();
+                foreach ($arrayResult as $missingRow){
+                    if(!array_key_exists($_SESSION[$_GET['pid']."_dash_condition1_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_condition1_var"]] == ""){
+                        $missing_row_n += 1;
+
+                        if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
+                            $missing_row_missing += 1;
+                        }
+                    }
+                    if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$record) || $record[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
+                        #MISSING
+                        $missing += 1;
+                    }
+                }
+                $average = 0;
+                $std_deviation = 0;
+                if(!empty($array_mean)) {
+                    #AVERAGE
+                    $average = number_format(array_sum($array_mean) / count($array_mean), 2);
+
+                    #STANDARD DEVIATION
+                    $std_deviation = number_format(std_deviation($array_mean), 2);
+                }
+                $calc = $average." (".$std_deviation.") (".$missing_row_n.",".$missing_row_missing.")";
+                $total_score_percent = number_format((($missing/$missing_row_n)*100),2);
+                $calculations = array("calc" => $calc, "missing" => $missing, "total_score_percent" => $total_score_percent);
+
                 if ($calculations['total'] < $max) {
                     $table .= "<td>NULL (<" . $max . ")</td>";
                 } else {
                     $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                 }
+
             }
             $arrayResult = array();
             foreach ($recordsParams as $index => $paramRecord) {
