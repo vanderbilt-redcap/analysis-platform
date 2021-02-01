@@ -83,3 +83,13 @@ function selectOnlyOneGroup(element){
         });
     }
 }
+
+function deselectAll(){
+    if($('#selectAll').is(':checked')){
+        $('#filter li input').removeAttr("checked");
+    }else{
+        $('#filter li input').attr("checked","checked");
+    }
+
+
+}

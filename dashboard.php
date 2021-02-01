@@ -45,6 +45,7 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
     <div id="filterBy" style="padding-bottom: 10px;width:100%" class="dropdown-check-list" tabindex="100">
         <span class="anchor form-control">Filter By...</span>
         <ul class="items" id="filter">
+            <li><input type='checkbox' name="selectAll" id="selectAll" onclick="deselectAll()"> Deselect All</li>
             <?php
             foreach ($filterby as $index=>$filter){
                 $filter_options = $module->getChoiceLabels($filter, $project_id);
@@ -91,11 +92,17 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
     </div>
     <div style="padding-bottom: 10px">
         <select class="form-control" id="condition2">
-            <option>Condition 2</option>
+            <?php
+                $selectedc = "";
+                if($_SESSION[$_GET['pid']."_dash_condition2_var"] == "undefined"){
+                    $selectedc = "selected";
+                }
+            ?>
+            <option <?=$selectedc?>>Condition 2</option>
             <?php
             foreach ($condition as $index=>$cond){
                 $selected = "";
-                if($_SESSION[$_GET['pid']."_dash_condition2_val"] != "" && $_SESSION[$_GET['pid']."_dash_condition2_val"] == $index && array_key_exists('dash',$_GET)){
+                if($_SESSION[$_GET['pid']."_dash_condition2_var"] != "undefined" && $_SESSION[$_GET['pid']."_dash_condition2_val"] != "" && $_SESSION[$_GET['pid']."_dash_condition2_val"] == $index && array_key_exists('dash',$_GET)){
                     $selected = "selected";
                 }
                 echo '<option name="'.$cond.'" value="'.$index.'" multiple2="'.$condition_multiple[$index].'" '.$selected.'>'.$module->getFieldLabel($cond).'</option>';
@@ -158,10 +165,14 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
 
             $table = '<table class="table table-bordered pull-left" id="table_archive"><thead>
             <tr><th> </th>';
-            foreach ($condition2_var as $index2 => $cond2){
-                $table .= "<th>".$index2.", ".$cond2."</th>";
+            if(!empty($condition2_var) && $_SESSION[$_GET['pid']."_dash_condition2_var"] != "undefined"){
+                foreach ($condition2_var as $index2 => $cond2){
+                    $table .= "<th>".$index2.", ".$cond2."</th>";
+                }
+                $table .= "<th>MISSING</th>";
+            }else{
+                $table .= "<th>OVERALL</th>";
             }
-            $table .= "<th>MISSING</th>";
 
             $table .= "</tr></thead><tbody>";
 
@@ -174,103 +185,131 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
             foreach ($condition1_var as $index1 => $cond1) {
                 $table .= "<tr><td><strong>".$index1.", ".$cond1."</strong></td>";
                 $condition1 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition1_var"],$index1);
-                foreach ($condition2_var as $index2 => $cond2){
-                    $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
+                if(!empty($condition2_var) && $_SESSION[$_GET['pid']."_dash_condition2_var"] != "undefined") {
+                    foreach ($condition2_var as $index2 => $cond2) {
+                        $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid'] . "_dash_condition2_var"], $index2);
+                        $RecordSet = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                            $condition1 . " AND " .
+                            $condition2
+                        );
+                        $records = ProjectData::getProjectInfoArray($RecordSet);
+                        $arrayResult = array();
+
+                        foreach ($recordsParams as $index => $paramRecord) {
+                            foreach ($records as $record) {
+                                if ($record['record_id'] == $paramRecord['record_id']) {
+                                    array_push($arrayResult, $record);
+                                }
+                            }
+                        }
+                        $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
+                        $missing_total[$index2] = $missing_total[$index2] + $calculations['missing'];
+                        if ($calculations['total'] < $max) {
+                            $table .= "<td>NULL (<" . $max . ")</td>";
+                        } else {
+                            $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                        }
+                    }
+                    #MISSING BY COLUMN
+                    $RecordSetMissingRow = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                        $condition1
+                    );
+                    $recordsMissingRow = ProjectData::getProjectInfoArray($RecordSetMissingRow);
+                    $arrayResult = array();
+                    foreach ($recordsParams as $index => $paramRecord) {
+                        foreach ($recordsMissingRow as $record){
+                            if($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1] == 0){
+                                array_push($arrayResult,$record);
+                            }
+                        }
+                    }
+                    $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
+                    if ($calculations['total'] < $max) {
+                        $table .= "<td>NULL (<" . $max . ")</td>";
+                    } else {
+                        $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                    }
+                }else{
                     $RecordSet = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
-                     $condition1." AND ".
-                     $condition2
+                        $condition1
                     );
                     $records = ProjectData::getProjectInfoArray($RecordSet);
                     $arrayResult = array();
 
                     foreach ($recordsParams as $index => $paramRecord) {
-                        foreach ($records as $record){
-                             if($record['record_id'] == $paramRecord['record_id']){
-                                 array_push($arrayResult,$record);
-                             }
-                         }
+                        foreach ($records as $record) {
+                            if ($record['record_id'] == $paramRecord['record_id']) {
+                                array_push($arrayResult, $record);
+                            }
+                        }
                     }
                     $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
                     $missing_total[$index2] = $missing_total[$index2] + $calculations['missing'];
                     if ($calculations['total'] < $max) {
-                     $table .= "<td>NULL (<" . $max . ")</td>";
+                        $table .= "<td>NULL (<" . $max . ")</td>";
                     } else {
-                     $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                        $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
                     }
                 }
-                #MISSING BY COLUMN
-                $RecordSetMissingRow = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
-                    $condition1
-                );
-                $recordsMissingRow = ProjectData::getProjectInfoArray($RecordSetMissingRow);
-                $arrayResult = array();
-                foreach ($recordsParams as $index => $paramRecord) {
-                    foreach ($recordsMissingRow as $record){
-                        if($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition1_var"]])[1] == 0){
-                            array_push($arrayResult,$record);
-                        }
-                    }
-                }
-                $calculations = \Vanderbilt\AnalysisPlatformExternalModule\getCalculations($arrayResult, $topScoreMax);
-                if ($calculations['total'] < $max) {
-                    $table .= "<td>NULL (<" . $max . ")</td>";
-                } else {
-                    $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
-                }
+
                 $table .= "</tr>";
             }
             #MISSING BY ROW
             $table .= "<tr><td><strong>MISSING</strong></td>";
-            foreach ($condition2_var as $index2 => $cond2){
-                $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid']."_dash_condition2_var"],$index2);
-                $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
-                    $condition2
-                );
-                $recordsMultiple = ProjectData::getProjectInfoArray($RecordSetMultiple);
-                $arrayResult = array();
-                foreach ($recordsParams as $index => $paramRecord) {
-                    foreach ($recordsMultiple as $record){
-                        if($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid']."_dash_condition2_var"]])[1] == 0){
-                            array_push($arrayResult,$record);
+            if(!empty($condition2_var) && $_SESSION[$_GET['pid']."_dash_condition2_var"] != "undefined") {
+                foreach ($condition2_var as $index2 => $cond2) {
+                    $condition2 = \Vanderbilt\AnalysisPlatformExternalModule\getParamOnType($_SESSION[$_GET['pid'] . "_dash_condition2_var"], $index2);
+                    $RecordSetMultiple = \REDCap::getData($project_id, 'array', null, null, null, null, false, false, false,
+                        $condition2
+                    );
+                    $recordsMultiple = ProjectData::getProjectInfoArray($RecordSetMultiple);
+                    $arrayResult = array();
+                    foreach ($recordsParams as $index => $paramRecord) {
+                        foreach ($recordsMultiple as $record) {
+                            if ($record['record_id'] == $paramRecord['record_id'] && array_count_values($record[$_SESSION[$_GET['pid'] . "_dash_condition2_var"]])[1] == 0) {
+                                array_push($arrayResult, $record);
+                            }
                         }
                     }
-                }
-                #MISSING CALCULATIONS
-                $missing_row_n = 0;
-                $missing_row_missing = 0;
-                $top_score = 0;
-                $array_mean = array();
-                foreach ($arrayResult as $missingRow){
-                    if(!array_key_exists($_SESSION[$_GET['pid']."_dash_condition1_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_condition1_var"]] == ""){
-                        $missing_row_n += 1;
+                    #MISSING CALCULATIONS
+                    $missing_row_n = 0;
+                    $missing_row_missing = 0;
+                    $top_score = 0;
+                    $array_mean = array();
+                    foreach ($arrayResult as $missingRow) {
+                        if (!array_key_exists($_SESSION[$_GET['pid'] . "_dash_condition1_var"], $missingRow) || $missingRow[$_SESSION[$_GET['pid'] . "_dash_condition1_var"]] == "") {
+                            $missing_row_n += 1;
 
-                        if(!array_key_exists($_SESSION[$_GET['pid']."_dash_outcome_var"],$missingRow) || $missingRow[$_SESSION[$_GET['pid']."_dash_outcome_var"]] == ""){
-                            $missing_row_missing += 1;
-                        }
-                        array_push($array_mean,$record[$_SESSION[$_GET['pid']."_dash_outcome_var"]]);
-                        if(\Vanderbilt\AnalysisPlatformExternalModule\isTopScore($record[$_SESSION[$_GET['pid']."_dash_outcome_var"]],$topScoreMax)){
-                            $top_score += 1;
+                            if (!array_key_exists($_SESSION[$_GET['pid'] . "_dash_outcome_var"], $missingRow) || $missingRow[$_SESSION[$_GET['pid'] . "_dash_outcome_var"]] == "") {
+                                $missing_row_missing += 1;
+                            }
+                            array_push($array_mean, $record[$_SESSION[$_GET['pid'] . "_dash_outcome_var"]]);
+                            if (\Vanderbilt\AnalysisPlatformExternalModule\isTopScore($record[$_SESSION[$_GET['pid'] . "_dash_outcome_var"]], $topScoreMax)) {
+                                $top_score += 1;
+                            }
                         }
                     }
-                }
-                $average = 0;
-                $std_deviation = 0;
-                if(!empty($array_mean)) {
-                    #AVERAGE
-                    $average = number_format(array_sum($array_mean) / count($array_mean), 2);
+                    $average = 0;
+                    $std_deviation = 0;
+                    if (!empty($array_mean)) {
+                        #AVERAGE
+                        $average = number_format(array_sum($array_mean) / count($array_mean), 2);
 
-                    #STANDARD DEVIATION
-                    $std_deviation = number_format(\Vanderbilt\AnalysisPlatformExternalModule\std_deviation($array_mean), 2);
-                }
-                $calc = $average." (".$std_deviation.") (".$missing_row_n.",".$missing_row_missing.")";
-                $total_score_percent = number_format((($top_score/$missing_row_n)*100),2);
-                $calculations = array("calc" => $calc, "total_score_percent" => $total_score_percent);
+                        #STANDARD DEVIATION
+                        $std_deviation = number_format(\Vanderbilt\AnalysisPlatformExternalModule\std_deviation($array_mean), 2);
+                    }
+                    $calc = $average . " (" . $std_deviation . ") (" . $missing_row_n . "," . $missing_row_missing . ")";
+                    $total_score_percent = number_format((($top_score / $missing_row_n) * 100), 2);
+                    $calculations = array("calc" => $calc, "total_score_percent" => $total_score_percent);
 
-                if ($calculations['total'] < $max) {
-                    $table .= "<td>NULL (<" . $max . ")</td>";
-                } else {
-                    $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                    if ($calculations['total'] < $max) {
+                        $table .= "<td>NULL (<" . $max . ")</td>";
+                    } else {
+                        $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
+                    }
+
                 }
+            }else{
 
             }
             $arrayResult = array();
@@ -286,6 +325,8 @@ $condition_multiple = $module->getProjectSetting('condition-multiple');
                 $table .= "<td><span class='mean'>" . $calculations['calc'] . "</span><span class='topscore'>" . $calculations['total_score_percent'] . " %</span></td>";
             }
             $table .= "</tr>";
+
+            #MULTIPLE
             if($_SESSION[$_GET['pid']."_dash_multiple1"] == "1"){
                 $table .= "<tr><td><strong>MUTIPLE</strong></td>";
                 foreach ($condition2_var as $index2 => $cond2) {
